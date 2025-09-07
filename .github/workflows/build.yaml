@@ -1,0 +1,44 @@
+name: Build Studio Linux
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Offical tag from WordPress Studio by Automattic"
+        required: true
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone upstream
+        run: |
+          git clone https://github.com/Automattic/studio.git
+          cd studio
+          git checkout ${{ github.event.inputs.tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: 'studio/.nvmrc'
+          cache: 'npm'
+
+      - name: Install deps
+        run: cd studio && npm ci
+
+      - name: Build
+        run: cd studio && npm run package && chmod +x out/Studio-linux-x64/studio
+
+      - name: Pack artifact
+        run: |
+          cd studio/out
+          tar -czf ../../studio-linux-${{ github.event.inputs.tag }}.tar.gz Studio-linux-x64
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: "Studio Linux ${{ github.event.inputs.tag }}"
+          files: studio-linux-${{ github.event.inputs.tag }}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
