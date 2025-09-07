@@ -1,2 +1,2 @@
 # wp-sudio-unofficial-flatpak
-WordPress Studio, a free desktop app that helps developers streamline their local WordPress development workflow.
+This repository only generates Linux binaries from the available source code in Automattic/studio. The code is licensed under GPLv2.
