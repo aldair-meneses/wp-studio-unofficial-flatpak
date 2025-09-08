@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout upstream at tag
-        if: false
         uses: actions/checkout@v4
         with:
           repository: Automattic/studio
@@ -20,25 +19,21 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        if: false
         uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
           cache: "npm"
 
       - name: Install dependencies
-        if: false
         run: npm ci
         working-directory: .
 
       - name: Build package
-        if: false
         run: |
           npm run package
           chmod +x out/Studio-linux-x64/studio
 
       - name: Pack artifact
-        if: false
         run: |
           tar -czf studio-linux-${{ github.event.inputs.tag }}.tar.gz -C out Studio-linux-x64
 
@@ -69,8 +64,8 @@ jobs:
               }
             }
 
+
       - name: Release
-        if: false
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.tag }}
