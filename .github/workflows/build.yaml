@@ -64,7 +64,6 @@ jobs:
               }
             }
 
-
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -72,4 +71,4 @@ jobs:
           name: "Studio Linux ${{ github.event.inputs.tag }}"
           files: studio-linux-${{ github.event.inputs.tag }}.tar.gz
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.FLATPAK_STUDIO_TOKEN }}
