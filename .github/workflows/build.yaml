@@ -4,35 +4,66 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Offical tag from WordPress Studio by Automattic"
+        description: "Official tag from WordPress Studio by Automattic"
         required: true
 
 jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - name: Clone upstream
-        run: |
-          git clone https://github.com/Automattic/studio.git
-          cd studio
-          git checkout ${{ github.event.inputs.tag }}
+      - name: Checkout upstream at tag
+        uses: actions/checkout@v4
+        with:
+          repository: Automattic/studio
+          ref: ${{ github.event.inputs.tag }}
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: 'studio/.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
-      - name: Install deps
-        run: cd studio && npm ci
+      - name: Install dependencies
+        run: npm ci
+        working-directory: .
 
-      - name: Build
-        run: cd studio && npm run package && chmod +x out/Studio-linux-x64/studio
+      - name: Build package
+        run: |
+          npm run package
+          chmod +x out/Studio-linux-x64/studio
 
       - name: Pack artifact
         run: |
-          cd studio/out
-          tar -czf ../../studio-linux-${{ github.event.inputs.tag }}.tar.gz Studio-linux-x64
+          tar -czf studio-linux-${{ github.event.inputs.tag }}.tar.gz -C out Studio-linux-x64
+
+      - name: Create tag if not exists
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.FLATPAK_STUDIO_TOKEN }}
+          script: |
+            const tag = '${{ github.event.inputs.tag }}';
+            try {
+              await github.rest.git.getRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `tags/${tag}`
+              });
+              console.log(`Tag ${tag} already exists.`);
+            } catch (err) {
+              if (err.status === 404) {
+                await github.rest.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `refs/tags/${tag}`,
+                  sha: context.sha
+                });
+                console.log(`Tag ${tag} created.`);
+              } else {
+                throw err;
+              }
+            }
+
 
       - name: Release
         uses: softprops/action-gh-release@v1
